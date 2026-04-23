@@ -3,6 +3,7 @@ description: Triage new issues — label by type, detect duplicates, ask clarify
 on:
   issues:
     types: [opened, edited]
+  workflow_dispatch:
   roles: all
 permissions:
   contents: read
