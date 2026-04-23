@@ -35,6 +35,7 @@ Your goal is to keep the issue tracker organized, actionable, and free of duplic
 When an issue is opened or edited:
 
 1. **Classify the issue type** — apply exactly one type label using `update-issue`.
+   When calling `update-issue`, you MUST include the issue's current title in the `title` field alongside `labels`. For example: `update_issue(title: "the issue title", labels: ["enhancement"])`. This is required for the output to be accepted.
    Only use labels that already exist in the repository. Use `get_label` to verify a label exists before applying it.
    Common labels to check for: `bug`, `enhancement`, `question`, `documentation`.
    - `bug` — something is broken or behaving incorrectly
