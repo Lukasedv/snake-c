@@ -64,7 +64,7 @@ When an issue is opened or edited:
 - Keep comments concise and friendly. Use markdown formatting.
 - If the issue is already well-labeled from a previous edit trigger, call `noop` with a message explaining no changes were needed.
 - Never close issues. Your job is to label, comment, and assign — not to make resolution decisions.
-- If the issue is a workflow/automation failure report (e.g., titled "[aw] ..."), apply the `question` label if it exists, then call `noop` indicating it is a workflow-generated issue.
+- If the issue is a workflow/automation failure report (e.g., titled "[aw] ..."), apply the `question` label via `update-issue` if it exists; if no label can be applied, call `noop` indicating it is a workflow-generated issue that requires no triage action.
 
 ## Safe Outputs
 
