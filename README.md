@@ -48,3 +48,19 @@ make run
 ```
 
 Best played in **Windows Terminal** (ANSI escape codes are enabled at startup via `SetConsoleMode`).
+
+---
+
+## Web version 🌐
+
+A Python web app that runs the same 30×18 Snake in the browser with a high-score leaderboard.
+
+**Stack:** FastAPI + uvicorn · vanilla JS (game logic) · HTML5 Canvas · SQLite
+
+```sh
+cd web
+pip install -r requirements.txt
+uvicorn app:app --reload
+```
+
+Open <http://127.0.0.1:8000>.  See [`web/README.md`](web/README.md) for full details.

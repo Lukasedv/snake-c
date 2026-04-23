@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Matopeli 🐍</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>Matopeli 🐍</h1>
+      <div id="hud">
+        <span>Score: <strong id="score">0</strong></span>
+        <span>Length: <strong id="length">4</strong></span>
+        <span id="status-msg"></span>
+      </div>
+    </header>
+
+    <div id="main">
+      <canvas id="game-canvas" width="720" height="432"></canvas>
+
+      <aside id="sidebar">
+        <h2>High Scores</h2>
+        <ol id="leaderboard"></ol>
+        <p class="hint">Arrow keys / WASD to steer<br/>
+           Space = pause &nbsp;|&nbsp; R = restart</p>
+      </aside>
+    </div>
+  </div>
+
+  <!-- Name-entry overlay shown on game over -->
+  <div id="overlay" class="hidden">
+    <div id="overlay-box">
+      <p id="overlay-msg">Game Over!</p>
+      <p>Your score: <strong id="overlay-score">0</strong></p>
+      <label for="player-name">Enter your name:</label>
+      <input id="player-name" type="text" maxlength="30" placeholder="Anonymous" />
+      <div id="overlay-buttons">
+        <button id="btn-submit">Submit &amp; Restart</button>
+        <button id="btn-skip">Skip</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/snake.js"></script>
+</body>
+</html>

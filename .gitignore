@@ -4,3 +4,10 @@ snake.exe
 *.o
 *.pdb
 *.ilk
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+web/scores.db
