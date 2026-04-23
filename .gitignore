@@ -1,0 +1,6 @@
+snake.exe
+*.obj
+*.exe
+*.o
+*.pdb
+*.ilk
