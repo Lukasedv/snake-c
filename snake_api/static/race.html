@@ -357,7 +357,7 @@ function renderBoards(msg) {
   msg.players.forEach((player, idx) => {
     const color = PLAYER_COLORS[idx % PLAYER_COLORS.length];
 
-    // Assign colour on first sight.
+    // Assign color on first sight.
     if (!colorMap[player.player_id]) colorMap[player.player_id] = color;
     const c = colorMap[player.player_id];
 
