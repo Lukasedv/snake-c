@@ -4,3 +4,9 @@ snake.exe
 *.o
 *.pdb
 *.ilk
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+*.egg-info/
+nohup.out
