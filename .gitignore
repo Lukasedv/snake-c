@@ -4,3 +4,6 @@ snake.exe
 *.o
 *.pdb
 *.ilk
+__pycache__/
+*.pyc
+*.pyo

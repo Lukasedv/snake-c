@@ -1,8 +1,8 @@
 # Matopeli 🐍
 
-A faithful, terminal-based recreation of the classic Nokia **Snake** — in C, with zero dependencies.
+A faithful, terminal-based recreation of the classic Nokia **Snake** — originally in C (zero dependencies), now also available as a Python port that preserves every gameplay detail while modernising the architecture.
 
-This is step 1 of the AI Tour Helsinki (BRK442) demo: the "OG" Snake that later steps modernize, port, and extend.
+This is part of the AI Tour Helsinki (BRK442) demo series.
 
 ## Controls
 
@@ -19,7 +19,35 @@ This is step 1 of the AI Tour Helsinki (BRK442) demo: the "OG" Snake that later 
 - Speed ramps up as you grow
 - Game over + restart
 
-## Build
+---
+
+## Python version (`snake/`)
+
+### Requirements
+
+Python 3.8 or newer — no third-party packages needed.
+
+### Run
+
+```sh
+python -m snake
+```
+
+Works on **Windows** (uses `msvcrt`) and **Linux / macOS** (uses `termios` + `select`).
+
+Best experienced in a terminal that supports ANSI escape codes (Windows Terminal, iTerm2, most modern Linux terminals).
+
+### Run tests
+
+```sh
+python -m unittest tests/test_game.py -v
+```
+
+---
+
+## C version (`src/`)
+
+### Build
 
 **With MinGW-w64 (`gcc` + `make`):**
 
@@ -35,7 +63,7 @@ build.bat
 
 Either command produces `snake.exe` in this directory.
 
-## Run
+### Run
 
 ```sh
 ./snake.exe
