@@ -129,6 +129,10 @@
     </div>
     <label>Target score (first to reach wins)</label>
     <input type="number" id="create-target" value="100" min="10" max="1000" step="10" />
+    <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;color:#e6edf3;margin-bottom:0.9rem;">
+      <input type="checkbox" id="create-add-bot" style="width:auto;margin:0;" />
+      🤖 Play vs Computer (adds an AI opponent)
+    </label>
     <button class="btn-primary" onclick="createRoom()">Create &amp; Join</button>
   </div>
 
@@ -186,8 +190,13 @@
     const roomId = document.getElementById("create-room-id").value.trim();
     const maxPlayers = document.getElementById("create-max-players").value;
     const target = document.getElementById("create-target").value;
+    const addBot = document.getElementById("create-add-bot").checked;
 
-    const params = new URLSearchParams({ max_players: maxPlayers, target_score: target });
+    const params = new URLSearchParams({
+      max_players: maxPlayers,
+      target_score: target,
+      add_bot: addBot,
+    });
 
     if (roomId) {
       // Use a specific room ID

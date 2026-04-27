@@ -64,8 +64,14 @@ async def list_rooms() -> dict:
 
 
 @app.post("/api/rooms")
-async def create_room(max_players: int = 4, target_score: int = 100) -> dict:
+async def create_room(
+    max_players: int = 4,
+    target_score: int = 100,
+    add_bot: bool = False,
+) -> dict:
     room = room_manager.create_room(max_players=max_players, target_score=target_score)
+    if add_bot:
+        room.add_bot()
     return {"room_id": room.room_id}
 
 

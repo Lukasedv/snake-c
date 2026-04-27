@@ -25,6 +25,7 @@ from typing import Optional
 
 from fastapi import WebSocket
 
+from .bot import BotSession
 from .game import Direction, Game
 
 
@@ -75,6 +76,7 @@ class Room:
         self.target_score = max(10, target_score)
         self.state = RoomState.WAITING
         self.players: dict[str, PlayerSession] = {}
+        self.bots: dict[str, BotSession] = {}
         self.spectators: list[WebSocket] = []
         self.winner: Optional[str] = None
         self._tick_task: Optional[asyncio.Task] = None  # type: ignore[type-arg]
@@ -85,10 +87,18 @@ class Room:
 
     def add_player(self, player_id: str, name: str, ws: WebSocket) -> bool:
         """Register *ws* as a player.  Returns False when the room is full."""
-        if len(self.players) >= self.max_players or self.state != RoomState.WAITING:
+        if self.player_count >= self.max_players or self.state != RoomState.WAITING:
             return False
         self.players[player_id] = PlayerSession(player_id, name, ws)
         return True
+
+    def add_bot(self, name: str = "Computer") -> Optional[str]:
+        """Add an AI-controlled bot. Returns its bot_id, or None if room is full."""
+        if self.player_count >= self.max_players or self.state != RoomState.WAITING:
+            return None
+        bot_id = f"bot-{uuid.uuid4().hex[:6]}"
+        self.bots[bot_id] = BotSession(bot_id, name)
+        return bot_id
 
     def add_spectator(self, ws: WebSocket) -> None:
         self.spectators.append(ws)
@@ -102,7 +112,7 @@ class Room:
 
     @property
     def player_count(self) -> int:
-        return len(self.players)
+        return len(self.players) + len(self.bots)
 
     @property
     def spectator_count(self) -> int:
@@ -140,17 +150,22 @@ class Room:
                 pass
 
     def _make_state_payload(self) -> dict:
-        players_data = [
-            {
+        def entry(pid: str, name: str, game: Game, is_bot: bool) -> dict:
+            return {
                 "player_id": pid,
-                "name": session.name,
-                "score": session.game.score,
-                "alive": not session.game.game_over,
-                "body": [[p.x, p.y] for p in session.game.body],
-                "food": [session.game.food.x, session.game.food.y],
-                "length": session.game.length,
+                "name": name,
+                "score": game.score,
+                "alive": not game.game_over,
+                "body": [[p.x, p.y] for p in game.body],
+                "food": [game.food.x, game.food.y],
+                "length": game.length,
+                "is_bot": is_bot,
             }
-            for pid, session in self.players.items()
+
+        players_data = [
+            entry(pid, s.name, s.game, False) for pid, s in self.players.items()
+        ] + [
+            entry(bid, b.name, b.game, True) for bid, b in self.bots.items()
         ]
         return {
             "type": "state",
@@ -183,14 +198,19 @@ class Room:
     async def _run_tick_loop(self) -> None:
         """Advance all player games and check win conditions each tick."""
         while self.state == RoomState.PLAYING:
-            alive = [s for s in self.players.values() if not s.game.game_over]
+            all_sessions = list(self.players.values()) + list(self.bots.values())
+            alive = [s for s in all_sessions if not s.game.game_over]
             if not alive:
                 break
 
             tick_ms = min(s.game.tick_ms() for s in alive)
             await asyncio.sleep(tick_ms / 1000.0)
 
-            for session in list(self.players.values()):
+            for bot in self.bots.values():
+                if not bot.game.game_over:
+                    bot.tick()
+
+            for session in all_sessions:
                 if not session.game.game_over:
                     session.game.step()
 
@@ -205,13 +225,15 @@ class Room:
 
     def _check_winner(self) -> Optional[str]:
         """Return a winner's name when a race end condition is met."""
+        all_sessions = list(self.players.values()) + list(self.bots.values())
+
         # 1. First to reach the target score.
-        for session in self.players.values():
+        for session in all_sessions:
             if session.game.score >= self.target_score:
                 return session.name
 
-        alive = [s for s in self.players.values() if not s.game.game_over]
-        dead = [s for s in self.players.values() if s.game.game_over]
+        alive = [s for s in all_sessions if not s.game.game_over]
+        dead = [s for s in all_sessions if s.game.game_over]
 
         # 2. Last snake standing when at least one player has died.
         if len(alive) == 1 and dead:
@@ -219,7 +241,7 @@ class Room:
 
         # 3. Everyone crashed simultaneously — highest score wins.
         if not alive and dead:
-            best = max(self.players.values(), key=lambda s: s.game.score)
+            best = max(all_sessions, key=lambda s: s.game.score)
             return best.name
 
         return None
