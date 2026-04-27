@@ -367,8 +367,16 @@ async def test_index_html() -> None:
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
         resp = await client.get("/")
-    assert resp.status_code == 200
-    assert "Snake Multiplayer" in resp.text
+        assert resp.status_code == 200
+    # `/` now serves the direct vs-bot play page.
+    assert "You vs Computer" in resp.text
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        lobby = await client.get("/lobby")
+        assert lobby.status_code == 200
+    assert "Snake Multiplayer" in lobby.text
 
 
 @pytest.mark.asyncio

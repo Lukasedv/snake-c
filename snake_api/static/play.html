@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Snake — You vs Computer</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0d1117;
+      color: #e6edf3;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1rem;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      width: 100%;
+      max-width: 720px;
+    }
+    header h1 { font-size: 1.4rem; color: #3fb950; }
+    .lobby-link {
+      margin-left: auto;
+      color: #8b949e;
+      text-decoration: none;
+      font-size: 0.85rem;
+    }
+    .lobby-link:hover { color: #e6edf3; }
+
+    #scoreboard {
+      width: 100%;
+      max-width: 720px;
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 0.75rem;
+    }
+    .score-card {
+      flex: 1;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 0.6rem 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .score-card.dead { opacity: 0.45; }
+    .score-card.winner { border-color: #e3b341; box-shadow: 0 0 0 2px #e3b34155; }
+    .name { font-weight: 700; font-size: 0.95rem; }
+    .name.player { color: #3fb950; }
+    .name.bot { color: #58a6ff; }
+    .score { font-size: 1.3rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+    #board-wrap {
+      position: relative;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      padding: 6px;
+    }
+    canvas { display: block; border-radius: 6px; }
+
+    #status-text {
+      margin-top: 1rem;
+      color: #8b949e;
+      font-size: 0.9rem;
+      min-height: 1.2em;
+    }
+
+    #overlay {
+      display: none;
+      position: absolute;
+      inset: 6px;
+      border-radius: 6px;
+      background: rgba(0,0,0,0.78);
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    #overlay h2 { font-size: 2rem; color: #e3b341; }
+    #overlay p  { color: #c9d1d9; }
+    .btn {
+      padding: 0.6rem 1.5rem;
+      background: #238636;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn:hover { opacity: 0.9; }
+
+    footer {
+      margin-top: 2rem;
+      color: #30363d;
+      font-size: 0.78rem;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>🐍 Snake — You vs Computer</h1>
+    <a class="lobby-link" href="/lobby">Multiplayer lobby →</a>
+  </header>
+
+  <div id="scoreboard">
+    <div class="score-card" id="card-player">
+      <span class="name player">You</span>
+      <span class="score" id="score-player">0</span>
+    </div>
+    <div class="score-card" id="card-bot">
+      <span class="name bot">🤖 Computer</span>
+      <span class="score" id="score-bot">0</span>
+    </div>
+  </div>
+
+  <div id="board-wrap">
+    <canvas id="board" width="600" height="360"></canvas>
+    <div id="overlay">
+      <h2 id="overlay-title">Game Over</h2>
+      <p id="overlay-sub"></p>
+      <button class="btn" id="btn-restart">Play again</button>
+    </div>
+  </div>
+
+  <p id="status-text">Use Arrow keys or WASD — first to crash loses</p>
+
+  <footer>Matopeli — Nokia Snake reimagined</footer>
+
+<script>
+const CELL = 20;
+const BOARD_W = 30;
+const BOARD_H = 18;
+const CANVAS_W = BOARD_W * CELL;
+const CANVAS_H = BOARD_H * CELL;
+
+const COLORS = {
+  player: { snake: "#3fb950", head: "#56d364" },
+  bot:    { snake: "#58a6ff", head: "#79c0ff" },
+  food:   "#ff7b72",
+  bg:     "#0d1117",
+  grid:   "#161b22",
+};
+
+const canvas = document.getElementById("board");
+canvas.width = CANVAS_W; canvas.height = CANVAS_H;
+canvas.style.width = CANVAS_W + "px"; canvas.style.height = CANVAS_H + "px";
+const ctx = canvas.getContext("2d");
+
+let ws = null;
+let lastState = null;
+
+function connect() {
+  const proto = location.protocol === "https:" ? "wss:" : "ws:";
+  ws = new WebSocket(`${proto}//${location.host}/ws/play?player_name=Player`);
+  ws.onmessage = (evt) => {
+    try {
+      const msg = JSON.parse(evt.data);
+      if (msg.type === "state") render(msg);
+    } catch(e) {}
+  };
+  ws.onclose = () => {
+    document.getElementById("status-text").textContent = "Disconnected — refresh to reconnect";
+  };
+}
+
+function sendDir(dir) {
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({ type: "dir", dir }));
+  }
+}
+
+function sendRestart() {
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({ type: "restart" }));
+  }
+}
+
+function render(state) {
+  lastState = state;
+
+  // Update scoreboard
+  for (const s of state.snakes) {
+    const card = document.getElementById(`card-${s.id}`);
+    const score = document.getElementById(`score-${s.id}`);
+    if (!card || !score) continue;
+    score.textContent = s.score;
+    card.classList.toggle("dead", !s.alive);
+    card.classList.toggle("winner", state.winner_id === s.id);
+  }
+
+  // Background
+  ctx.fillStyle = COLORS.bg;
+  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+  // Grid
+  ctx.strokeStyle = COLORS.grid;
+  ctx.lineWidth = 0.5;
+  for (let x = 0; x <= BOARD_W; x++) {
+    ctx.beginPath(); ctx.moveTo(x*CELL, 0); ctx.lineTo(x*CELL, CANVAS_H); ctx.stroke();
+  }
+  for (let y = 0; y <= BOARD_H; y++) {
+    ctx.beginPath(); ctx.moveTo(0, y*CELL); ctx.lineTo(CANVAS_W, y*CELL); ctx.stroke();
+  }
+
+  // Food
+  const [fx, fy] = state.food;
+  ctx.fillStyle = COLORS.food;
+  ctx.beginPath();
+  ctx.arc(fx*CELL + CELL/2, fy*CELL + CELL/2, CELL/2 - 2, 0, Math.PI*2);
+  ctx.fill();
+
+  // Snakes
+  for (const s of state.snakes) {
+    const palette = COLORS[s.id] || COLORS.player;
+    for (let i = 0; i < s.body.length; i++) {
+      const [bx, by] = s.body[i];
+      const isHead = i === s.body.length - 1;
+      ctx.fillStyle = !s.alive
+        ? "#3a3a3a"
+        : (isHead ? palette.head : palette.snake);
+      const pad = isHead ? 1 : 2;
+      ctx.fillRect(bx*CELL + pad, by*CELL + pad, CELL - pad*2, CELL - pad*2);
+    }
+  }
+
+  // Game-over overlay
+  const overlay = document.getElementById("overlay");
+  if (state.game_over) {
+    overlay.style.display = "flex";
+    const title = document.getElementById("overlay-title");
+    const sub = document.getElementById("overlay-sub");
+    if (state.winner_id === "player") {
+      title.textContent = "🏆 You win!";
+    } else if (state.winner_id === "bot") {
+      title.textContent = "💀 Computer wins";
+    } else {
+      title.textContent = "🤝 Tie";
+    }
+    const playerS = state.snakes.find(s => s.id === "player");
+    const botS = state.snakes.find(s => s.id === "bot");
+    sub.textContent = `You: ${playerS?.score || 0}  ·  Computer: ${botS?.score || 0}`;
+  } else {
+    overlay.style.display = "none";
+  }
+}
+
+const KEY_MAP = {
+  ArrowUp: "UP",    w: "UP",    W: "UP",
+  ArrowDown: "DOWN", s: "DOWN", S: "DOWN",
+  ArrowLeft: "LEFT", a: "LEFT", A: "LEFT",
+  ArrowRight: "RIGHT", d: "RIGHT", D: "RIGHT",
+};
+
+document.addEventListener("keydown", (e) => {
+  const dir = KEY_MAP[e.key];
+  if (dir) {
+    e.preventDefault();
+    sendDir(dir);
+  } else if ((e.key === "r" || e.key === "R") && lastState && lastState.game_over) {
+    sendRestart();
+  }
+});
+
+document.getElementById("btn-restart").addEventListener("click", sendRestart);
+
+connect();
+</script>
+</body>
+</html>
