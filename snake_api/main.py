@@ -46,7 +46,7 @@ _BOT_ID = "bot"
 
 @app.get("/", response_class=HTMLResponse)
 async def get_play() -> HTMLResponse:
-    return HTMLResponse((_STATIC / "play.html").read_text())
+     return HTMLResponse((_STATIC / "play.html").read_text(encoding="utf-8"))
 
 
 # ---------------------------------------------------------------------------
