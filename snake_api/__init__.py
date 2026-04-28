@@ -1,0 +1,1 @@
+"""Snake multiplayer API package."""
