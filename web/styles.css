@@ -1,0 +1,54 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: #0d0d0d;
+  color: #e0e0e0;
+  font-family: "Courier New", Courier, monospace;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+#container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+h1 {
+  font-size: 1.6rem;
+  letter-spacing: 0.12em;
+  color: #c8f56a;
+}
+
+#canvas {
+  display: block;
+  border: 2px solid #444;
+  background: #111;
+  image-rendering: pixelated;
+}
+
+#hud {
+  display: flex;
+  gap: 2rem;
+  font-size: 1rem;
+  color: #aaa;
+}
+
+#hud span span {
+  color: #c8f56a;
+  font-weight: bold;
+}
+
+#hint {
+  font-size: 0.78rem;
+  color: #555;
+}

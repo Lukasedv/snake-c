@@ -1,13 +1,13 @@
 # Matopeli 🐍
 
-A faithful, terminal-based recreation of the classic Nokia **Snake** — in C, with zero dependencies.
+A faithful recreation of the classic Nokia **Snake** — available as both a terminal C app and a browser-playable web app.
 
 This is step 1 of the AI Tour Helsinki (BRK442) demo: the "OG" Snake that later steps modernize, port, and extend.
 
 ## Controls
 
 - **Arrow keys** (or **WASD**) — steer
-- **Q** — quit
+- **Q** — quit (terminal version only)
 - **R** — restart after game over
 
 ## Features
@@ -19,7 +19,17 @@ This is step 1 of the AI Tour Helsinki (BRK442) demo: the "OG" Snake that later 
 - Speed ramps up as you grow
 - Game over + restart
 
-## Build
+## Web App
+
+Open `web/index.html` directly in a browser, **or** use the included Python server
+(required when your browser blocks `file://` requests):
+
+```sh
+python serve.py        # http://localhost:8000
+python serve.py 9000   # custom port
+```
+
+## Build (terminal C version)
 
 **With MinGW-w64 (`gcc` + `make`):**
 
@@ -35,7 +45,7 @@ build.bat
 
 Either command produces `snake.exe` in this directory.
 
-## Run
+## Run (terminal C version)
 
 ```sh
 ./snake.exe
